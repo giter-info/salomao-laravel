@@ -16,7 +16,7 @@ class SalomaoMediaSeeder extends Seeder
      */
     public function run(): void
     {
-        $sourceBase = base_path('../salomao-site');
+        $sourceBase = (string) config('app.salomao_site_path', '/var/salomao-site');
 
         if (! File::isDirectory($sourceBase)) {
             $this->command?->warn("Fonte de mídia não encontrada em: {$sourceBase}");

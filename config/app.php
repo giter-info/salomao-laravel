@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'salomao_site_path' => env('SALOMAO_SITE_PATH', base_path('../salomao-site')),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

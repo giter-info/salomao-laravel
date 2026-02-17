@@ -1,0 +1,61 @@
+services:
+  mysql:
+    env_file:
+      - .env.docker.prod
+
+  app:
+    image: salomao-laravel-app:prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+    restart: unless-stopped
+    env_file:
+      - .env.docker.prod
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - salomao
+
+  queue:
+    image: salomao-laravel-app:prod
+    restart: unless-stopped
+    env_file:
+      - .env.docker.prod
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: php artisan queue:work --tries=3 --timeout=90
+    networks:
+      - salomao
+
+  scheduler:
+    image: salomao-laravel-app:prod
+    restart: unless-stopped
+    env_file:
+      - .env.docker.prod
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: php artisan schedule:work
+    networks:
+      - salomao
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    networks:
+      - salomao

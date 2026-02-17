@@ -1,7 +1,7 @@
 @extends('layouts.site')
 
 @section('content')
-<section class="hero" style="--hero-bg-image: url('{{ $heroBackground }}')">
+<section class="hero" style="--hero-bg-image: url('{{ url($heroBackground) }}')">
     <div class="shell hero-inner">
         <img src="{{ $unitLogo }}" alt="Logo" class="unit-logo">
         @php
