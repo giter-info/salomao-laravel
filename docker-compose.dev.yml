@@ -1,0 +1,85 @@
+services:
+  mysql:
+    env_file:
+      - .env.docker.dev
+
+  app:
+    image: salomao-laravel-app:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    restart: unless-stopped
+    env_file:
+      - .env.docker.dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./:/var/www
+      - ../salomao-site:/var/salomao-site:ro
+    networks:
+      - salomao
+
+  queue:
+    image: salomao-laravel-app:dev
+    restart: unless-stopped
+    env_file:
+      - .env.docker.dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./:/var/www
+      - ../salomao-site:/var/salomao-site:ro
+    command: php artisan queue:listen --tries=1 --timeout=0
+    networks:
+      - salomao
+
+  scheduler:
+    image: salomao-laravel-app:dev
+    restart: unless-stopped
+    env_file:
+      - .env.docker.dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./:/var/www
+      - ../salomao-site:/var/salomao-site:ro
+    command: php artisan schedule:work
+    networks:
+      - salomao
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - ./:/var/www:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - salomao
+
+  node:
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /var/www
+    depends_on:
+      - app
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    volumes:
+      - ./:/var/www
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    networks:
+      - salomao
